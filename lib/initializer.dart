@@ -1,1 +1,1 @@
-library libasserest_ftp;
+library initializer;
