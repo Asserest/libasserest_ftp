@@ -3,60 +3,96 @@ import 'dart:io';
 
 import 'package:ftpconnect/ftpconnect.dart' show SecurityType;
 import 'package:libasserest_interface/interface.dart';
+import 'package:quiver/core.dart' as quiver;
 
-class PathUnresolvedException extends AsserestException implements FormatException {
-  final dynamic _locationInfo;
+class NonAbsolutePathException extends AsserestException
+    implements FormatException {
+  final Uri _relativeUri;
 
-  PathUnresolvedException._(this._locationInfo);
+  NonAbsolutePathException._(this._relativeUri);
 
   @override
-  final int? offset = null;
+  int? get offset => null;
 
-  static String _printSrc(dynamic info) {
-    if (info is File) {
-      return info.path;
+  @override
+  String get message => "Unable to located file by using relative path";
+
+  @override
+  get source => _relativeUri;
+
+  @override
+  String toString() {
+    StringBuffer buf = StringBuffer();
+    buf
+      ..write("NonAbsolutePathException: ")
+      ..write(message)
+      ..writeln("Sources: ")
+      ..write("$source");
+
+    return buf.toString();
+  }
+}
+
+abstract class FTPFilesOperation {
+  const FTPFilesOperation._();
+
+  Uri get targetPath;
+  bool get success;
+
+  static void _verifyAbsUri(Iterable<Uri> uris) {
+    final invalidUri = uris.where((element) => !element.hasAbsolutePath);
+    if (invalidUri.isNotEmpty) {
+      throw NonAbsolutePathException._(invalidUri.first);
     }
+  }
+}
 
-    return "$info";
+class FTPSingleFileOperation implements FTPFilesOperation {
+  @override
+  final Uri targetPath;
+
+  @override
+  final bool success;
+
+  FTPSingleFileOperation({required this.targetPath, required this.success}) {
+    FTPFilesOperation._verifyAbsUri([targetPath]);
   }
 
   @override
-  String get source {
-    if (_locationInfo is Iterable) {
-      StringBuffer buf = StringBuffer();
-      _locationInfo.forEach((element) => buf.writeln(_printSrc(element)));
+  int get hashCode => quiver.hash2(
+      targetPath.toFilePath(windows: false), targetPath.toString());
+}
 
-      return buf.toString();
-    }
+class FTPDoubleFilesOperation implements FTPFilesOperation {
+  final Uri sourcePath;
 
-    return _printSrc(_locationInfo);
+  @override
+  final Uri targetPath;
+
+  @override
+  final bool success;
+
+  FTPDoubleFilesOperation(
+      {required this.sourcePath,
+      required this.targetPath,
+      required this.success}) {
+    FTPFilesOperation._verifyAbsUri([sourcePath, targetPath]);
   }
 
+  @override
+  int get hashCode => quiver.hash2(
+      sourcePath.toFilePath(windows: false),
+      targetPath.toFilePath(windows: false));
 }
 
 class AsserestFileProperties {
-  final List<Uri> read;
-
-  final List<File> write;
-
-  final List<Uri> delete;
-
-  const AsserestFileProperties._(this.read, this.write, this.delete);
-
-  factory AsserestFileProperties({List<Uri> read = const <Uri>[], List<File> write = const <File>[], List<Uri> delete = const <Uri>[]}) {
-    final List<dynamic> invalidProperty = []..addAll(read.where((element) => !element.hasAbsolutePath))
-      ..addAll(write.where((element) => !element.isAbsolute))
-      ..addAll(delete.where((element) => !element.hasAbsolutePath));
-
-    if (invalidProperty.isNotEmpty) {
-      throw PathUnresolvedException._(invalidProperty);
-    }
-
-    return AsserestFileProperties._(read, write, delete);
-  }
+  
 }
 
 class AsserestFtpProperty implements AsserestProperty {
+  /// The [Uri.host] of testing [url].
+  ///
+  /// This assertion will ignore applied path if provided.
   @override
   final Uri url;
 
@@ -75,10 +111,17 @@ class AsserestFtpProperty implements AsserestProperty {
 
   final SecurityType security;
 
-  final AsserestFileProperties fileProperties;
+  final AsserestFileProperties? fileProperties;
 
-  const AsserestFtpProperty._(this.url, this.accessible, this.timeout,
-      this.tryCount, this.username, this.password, this.security, this.fileProperties);
+  const AsserestFtpProperty._(
+      this.url,
+      this.accessible,
+      this.timeout,
+      this.tryCount,
+      this.username,
+      this.password,
+      this.security,
+      this.fileProperties);
 }
 
 class FTPPropertyParseProcessor
@@ -99,8 +142,7 @@ class FTPPropertyParseProcessor
         additionalProperty["username"] ?? "anonymous",
         additionalProperty["password"],
         security,
-        AsserestFileProperties()
-        );
+        null);
   }
 
   @override
