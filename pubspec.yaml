@@ -9,5 +9,6 @@ dependencies:
   meta: ^1.8.0
   ftpconnect: ^2.0.5
   quiver: ^3.2.1
+  unique_list: ^1.0.1
 dev_dependencies:
   test: ^1.23.1

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:ftpconnect/ftpconnect.dart' show SecurityType;
 import 'package:libasserest_interface/interface.dart';
 import 'package:quiver/core.dart' as quiver;
+import 'package:unique_list/unique_list.dart';
 
 class NonAbsolutePathException extends AsserestException
     implements FormatException {
@@ -33,60 +34,40 @@ class NonAbsolutePathException extends AsserestException
   }
 }
 
-abstract class FTPFilesOperation {
-  const FTPFilesOperation._();
+class OperatingInDeniedFTPException extends AsserestException {
+  OperatingInDeniedFTPException._();
 
-  Uri get targetPath;
-  bool get success;
+  @override
+  String get message => "This operation is illegal when applying testing file in expected failure condition.";
 
-  static void _verifyAbsUri(Iterable<Uri> uris) {
-    final invalidUri = uris.where((element) => !element.hasAbsolutePath);
-    if (invalidUri.isNotEmpty) {
-      throw NonAbsolutePathException._(invalidUri.first);
+  @override
+  String toString() => "OperatingInDeniedFTPException: $message";
+}
+
+class AsserestFileAccess {
+  final UnmodifiableListView<String> pathSeg;
+  final bool success;
+
+  const AsserestFileAccess._(this.pathSeg, this.success);
+
+  factory AsserestFileAccess(String path, bool success) {
+    final pathUri = Uri.file(path, windows: false);
+
+    if (!pathUri.hasAbsolutePath) {
+      // Unaccept relative path
+      throw NonAbsolutePathException._(pathUri);
     }
-  }
-}
 
-class FTPSingleFileOperation implements FTPFilesOperation {
-  @override
-  final Uri targetPath;
-
-  @override
-  final bool success;
-
-  FTPSingleFileOperation({required this.targetPath, required this.success}) {
-    FTPFilesOperation._verifyAbsUri([targetPath]);
+    return AsserestFileAccess._(
+        UnmodifiableListView(pathUri.pathSegments), success);
   }
 
   @override
-  int get hashCode => quiver.hash2(
-      targetPath.toFilePath(windows: false), targetPath.toString());
-}
-
-class FTPDoubleFilesOperation implements FTPFilesOperation {
-  final Uri sourcePath;
+  int get hashCode => quiver.hashObjects(pathSeg) >> pathSeg.length % 3;
 
   @override
-  final Uri targetPath;
-
-  @override
-  final bool success;
-
-  FTPDoubleFilesOperation(
-      {required this.sourcePath,
-      required this.targetPath,
-      required this.success}) {
-    FTPFilesOperation._verifyAbsUri([sourcePath, targetPath]);
-  }
-
-  @override
-  int get hashCode => quiver.hash2(
-      sourcePath.toFilePath(windows: false),
-      targetPath.toFilePath(windows: false));
-}
-
-class AsserestFileProperties {
-  
+  bool operator ==(Object other) =>
+      other is AsserestFileAccess && hashCode == other.hashCode;
 }
 
 class AsserestFtpProperty implements AsserestProperty {
@@ -111,7 +92,7 @@ class AsserestFtpProperty implements AsserestProperty {
 
   final SecurityType security;
 
-  final AsserestFileProperties? fileProperties;
+  final UniqueList<AsserestFileAccess>? fileAccess;
 
   const AsserestFtpProperty._(
       this.url,
@@ -121,7 +102,7 @@ class AsserestFtpProperty implements AsserestProperty {
       this.username,
       this.password,
       this.security,
-      this.fileProperties);
+      this.fileAccess);
 }
 
 class FTPPropertyParseProcessor
@@ -134,6 +115,11 @@ class FTPPropertyParseProcessor
     final SecurityType security = SecurityType.values
         .singleWhere((e) => e.name == additionalProperty["security"]);
 
+    final List<Map<String, dynamic>>? access = additionalProperty["access"];
+    if (access != null && !accessible) {
+      throw OperatingInDeniedFTPException._();
+    }
+
     return AsserestFtpProperty._(
         url,
         accessible,
@@ -142,7 +128,14 @@ class FTPPropertyParseProcessor
         additionalProperty["username"] ?? "anonymous",
         additionalProperty["password"],
         security,
-        null);
+        access != null
+            ? UniqueList.from(
+                access.map(
+                    (e) => AsserestFileAccess(e["target_path"], e["success"])),
+                growable: false,
+                nullable: false,
+                strict: false)
+            : null);
   }
 
   @override
