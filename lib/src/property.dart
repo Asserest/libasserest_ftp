@@ -1,11 +1,13 @@
 import 'dart:collection';
-import 'dart:io';
 
 import 'package:ftpconnect/ftpconnect.dart' show SecurityType;
 import 'package:libasserest_interface/interface.dart';
+import 'package:meta/meta.dart';
 import 'package:quiver/core.dart' as quiver;
 import 'package:unique_list/unique_list.dart';
 
+/// This exception will be thrown when applying relative path
+/// as paramater which expected in absolute form.
 class NonAbsolutePathException extends AsserestException
     implements FormatException {
   final Uri _relativeUri;
@@ -34,6 +36,9 @@ class NonAbsolutePathException extends AsserestException
   }
 }
 
+/// Exclusive exception for applying [AsserestFileAccess] when
+/// [AsserestFtpProperty.accessible] is `false` which causing
+/// violation in logic.
 class OperatingInDeniedFTPException extends AsserestException {
   OperatingInDeniedFTPException._();
 
@@ -44,12 +49,30 @@ class OperatingInDeniedFTPException extends AsserestException {
   String toString() => "OperatingInDeniedFTPException: $message";
 }
 
+/// An entity of asserting file access for each path and determine
+/// it is accessible by listing content or download it for path to 
+/// directory or files accordingly.
+@sealed
 class AsserestFileAccess {
+  /// A segment of the path
   final UnmodifiableListView<String> pathSeg;
+
+  /// Determine it can be operated without error.
+  /// 
+  /// The methods of testing [pathSeg] followed as below:
+  /// |pathSeg's type|Testing method|
+  /// |:--------------:|:-------------|
+  /// |Directory|Invoke `list` command|
+  /// |Files|Download to local storage (as a cache)|
   final bool success;
 
   const AsserestFileAccess._(this.pathSeg, this.success);
 
+  /// Construct a file access property for [path] and determine
+  /// is operated [success] or not.
+  /// 
+  /// [path] must be in absolute form or throws [NonAbsolutePathException]
+  /// if not obey.
   factory AsserestFileAccess(String path, bool success) {
     final pathUri = Uri.file(path, windows: false);
 
@@ -86,12 +109,22 @@ class AsserestFtpProperty implements AsserestProperty {
   @override
   final int? tryCount;
 
+  /// Username of accessing FTP server.
+  /// 
+  /// If this field omitted in configuration script, `anonymous`
+  /// will be parsed automatically.
   final String username;
 
+  /// Password of username for granted access.
+  /// 
+  /// **WARNING: ASSEREST DOES NOT LIABLE FOR ANY DATA LEAK DUE TO IMPROPER IMPLEMENTATION ON TESTING**
   final String? password;
 
+  /// Define [SecurityType] for accessing FTP server.
   final SecurityType security;
 
+  /// Optional field for [accessible] configuration that determine each path given
+  /// can be operated normally.
   final UniqueList<AsserestFileAccess>? fileAccess;
 
   const AsserestFtpProperty._(
@@ -105,6 +138,7 @@ class AsserestFtpProperty implements AsserestProperty {
       this.fileAccess);
 }
 
+/// [PropertyParseProcessor] for constructing FTP configuration.
 class FTPPropertyParseProcessor
     extends PropertyParseProcessor<AsserestFtpProperty> {
   const FTPPropertyParseProcessor();
@@ -121,7 +155,7 @@ class FTPPropertyParseProcessor
     }
 
     return AsserestFtpProperty._(
-        url,
+        url.replace(pathSegments: const []),
         accessible,
         timeout,
         tryCount,
