@@ -54,27 +54,27 @@ class OperatingInDeniedFTPException extends AsserestException {
 /// directory or files accordingly.
 @sealed
 class AsserestFileAccess {
-  /// A segment of the path
-  final UnmodifiableListView<String> pathSeg;
+  /// A segment of the path regarding on FTP's root location.
+  final UnmodifiableListView<String> ftpPath;
 
   /// Determine it can be operated without error.
   /// 
-  /// The methods of testing [pathSeg] followed as below:
+  /// The methods of testing [ftpPath] followed as below:
   /// |pathSeg's type|Testing method|
   /// |:--------------:|:-------------|
   /// |Directory|Invoke `list` command|
   /// |Files|Download to local storage (as a cache)|
   final bool success;
 
-  const AsserestFileAccess._(this.pathSeg, this.success);
+  const AsserestFileAccess._(this.ftpPath, this.success);
 
-  /// Construct a file access property for [path] and determine
+  /// Construct a file access property for [ftpPath] and determine
   /// is operated [success] or not.
   /// 
-  /// [path] must be in absolute form or throws [NonAbsolutePathException]
+  /// [ftpPath] must be in absolute form or throws [NonAbsolutePathException]
   /// if not obey.
-  factory AsserestFileAccess(String path, bool success) {
-    final pathUri = Uri.file(path, windows: false);
+  factory AsserestFileAccess(String ftpPath, bool success) {
+    final pathUri = Uri.file(ftpPath, windows: false);
 
     if (!pathUri.hasAbsolutePath) {
       // Unaccept relative path
@@ -86,13 +86,14 @@ class AsserestFileAccess {
   }
 
   @override
-  int get hashCode => quiver.hashObjects(pathSeg) >> pathSeg.length % 3;
+  int get hashCode => quiver.hashObjects(ftpPath) >> ftpPath.length % 3;
 
   @override
   bool operator ==(Object other) =>
       other is AsserestFileAccess && hashCode == other.hashCode;
 }
 
+/// A property to define assertion on FTP protocol.
 class AsserestFtpProperty implements AsserestProperty {
   /// The [Uri.host] of testing [url].
   ///

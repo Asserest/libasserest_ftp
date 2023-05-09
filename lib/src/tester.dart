@@ -8,23 +8,25 @@ import 'package:random_string/random_string.dart' as random_string;
 
 import 'property.dart';
 
-File get _dlTestFile {
-  while (true) {
-    final String tempPath = path.join(
-        Platform.isWindows ? Platform.environment["TEMP"]! : "/tmp",
-        "asserest_dl_tester",
-        random_string.randomAlphaNumeric(96));
+String get _testTempDLDir => path.join(
+    Platform.isWindows ? Platform.environment["TEMP"]! : "/tmp",
+    "asserest_dl_tester");
 
-    File exportFile = File(tempPath);
-    if (!exportFile.existsSync()) {
-      return exportFile;
-    }
-  }
-}
-
+/// Test platform for asserting FTP protocol
 class AsserestFtpTestPlatform
     extends AsserestTestPlatform<AsserestFtpProperty> {
+  
+  /// Construct a FTP tester with given property.
   AsserestFtpTestPlatform(super.property, {super.counter});
+
+  static Future<File> get _dlFileObj async {
+    Directory tempDLDir = Directory(_testTempDLDir);
+    tempDLDir = await tempDLDir.createTemp("asrftp");
+
+    File f =
+        File(path.join(tempDLDir.path, random_string.randomAlphaNumeric(64)));
+    return await f.create(exclusive: true);
+  }
 
   @override
   AsyncTask<AsserestFtpProperty, AsserestReport> instantiate(
@@ -48,6 +50,7 @@ class AsserestFtpTestPlatform
 
     try {
       await ftp.connect();
+      return ftp;
     } on FTPConnectException {
       return null;
     }
@@ -55,15 +58,15 @@ class AsserestFtpTestPlatform
 
   Future<AsserestResult> _fileAccessTester(FTPConnect ftpConn) async {
     for (AsserestFileAccess afa in property.fileAccess!) {
-      if (afa.pathSeg.isEmpty) {
-        return AsserestResult.failure;
-      }
-
-      final String absAFA = "/${path.joinAll(afa.pathSeg)}";
+      final String absAFA = "/${path.joinAll(afa.ftpPath)}";
       final bool cdTest = await ftpConn.changeDirectory(absAFA);
+
       if (cdTest) {
+        // It is directory
         await ftpConn.listDirectoryContent();
-      } else if (!await ftpConn.downloadFileWithRetry(absAFA, _dlTestFile, pRetryCount: property.tryCount!)) {
+      } else if (!await ftpConn.downloadFileWithRetry(absAFA, await _dlFileObj,
+          pRetryCount: property.tryCount!)) {
+            // Download files but 
         return AsserestResult.failure;
       }
     }
@@ -77,6 +80,7 @@ class AsserestFtpTestPlatform
 
     try {
       if (property.accessible) {
+        // Accessible case
         for (int count = 0; count < property.tryCount!; count++) {
           ftpConn = await _ftpConn();
           if (ftpConn != null) {
@@ -92,6 +96,7 @@ class AsserestFtpTestPlatform
 
         return _fileAccessTester(ftpConn);
       } else {
+        // Inaccessible case
         ftpConn = await _ftpConn();
 
         return ftpConn == null
@@ -99,10 +104,13 @@ class AsserestFtpTestPlatform
             : AsserestResult.failure;
       }
     } on FTPConnectException {
+      // Assume failed if FtpConnect throw exceptions
       return AsserestResult.failure;
     } catch (_) {
+      // Other error exception which likely not related with FtpConnect
       return AsserestResult.error;
     } finally {
+      // Ensure disconnected
       try {
         await ftpConn!.disconnect();
       } catch (__) {}
