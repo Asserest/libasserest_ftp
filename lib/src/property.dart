@@ -140,9 +140,9 @@ class AsserestFtpProperty implements AsserestProperty {
 }
 
 /// [PropertyParseProcessor] for constructing FTP configuration.
-class FTPPropertyParseProcessor
+class FtpPropertyParseProcessor
     extends PropertyParseProcessor<AsserestFtpProperty> {
-  const FTPPropertyParseProcessor();
+  const FtpPropertyParseProcessor();
 
   @override
   AsserestFtpProperty createProperty(Uri url, Duration timeout, bool accessible,
