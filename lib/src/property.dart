@@ -43,14 +43,15 @@ class OperatingInDeniedFTPException extends AsserestException {
   OperatingInDeniedFTPException._();
 
   @override
-  String get message => "This operation is illegal when applying testing file in expected failure condition.";
+  String get message =>
+      "This operation is illegal when applying testing file in expected failure condition.";
 
   @override
   String toString() => "OperatingInDeniedFTPException: $message";
 }
 
 /// An entity of asserting file access for each path and determine
-/// it is accessible by listing content or download it for path to 
+/// it is accessible by listing content or download it for path to
 /// directory or files accordingly.
 @sealed
 class AsserestFileAccess {
@@ -58,7 +59,7 @@ class AsserestFileAccess {
   final UnmodifiableListView<String> ftpPath;
 
   /// Determine it can be operated without error.
-  /// 
+  ///
   /// The methods of testing [ftpPath] followed as below:
   /// |pathSeg's type|Testing method|
   /// |:--------------:|:-------------|
@@ -70,7 +71,7 @@ class AsserestFileAccess {
 
   /// Construct a file access property for [ftpPath] and determine
   /// is operated [success] or not.
-  /// 
+  ///
   /// [ftpPath] must be in absolute form or throws [NonAbsolutePathException]
   /// if not obey.
   factory AsserestFileAccess(String ftpPath, bool success) {
@@ -111,13 +112,13 @@ class AsserestFtpProperty implements AsserestProperty {
   final int? tryCount;
 
   /// Username of accessing FTP server.
-  /// 
+  ///
   /// If this field omitted in configuration script, `anonymous`
   /// will be parsed automatically.
   final String username;
 
   /// Password of username for granted access.
-  /// 
+  ///
   /// **WARNING: ASSEREST DOES NOT LIABLE FOR ANY DATA LEAK DUE TO IMPROPER IMPLEMENTATION ON TESTING**
   final String? password;
 

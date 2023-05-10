@@ -15,7 +15,6 @@ String get _testTempDLDir => path.join(
 /// Test platform for asserting FTP protocol
 class AsserestFtpTestPlatform
     extends AsserestTestPlatform<AsserestFtpProperty> {
-  
   /// Construct a FTP tester with given property.
   AsserestFtpTestPlatform(super.property, {super.counter});
 
@@ -66,7 +65,7 @@ class AsserestFtpTestPlatform
         await ftpConn.listDirectoryContent();
       } else if (!await ftpConn.downloadFileWithRetry(absAFA, await _dlFileObj,
           pRetryCount: property.tryCount!)) {
-            // Download files but 
+        // Download files but
         return AsserestResult.failure;
       }
     }

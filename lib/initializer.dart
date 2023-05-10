@@ -2,8 +2,7 @@
 library initializer;
 
 import 'package:libasserest_interface/interface.dart';
-import 'src/property.dart'
-    show AsserestFtpProperty, FtpPropertyParseProcessor;
+import 'src/property.dart' show AsserestFtpProperty, FtpPropertyParseProcessor;
 import 'src/tester.dart';
 
 /// Guard check to prevent [asserestFtpSetup] called more than once.
