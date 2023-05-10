@@ -6,7 +6,7 @@ import 'src/property.dart'
     show AsserestFtpProperty, FtpPropertyParseProcessor;
 import 'src/tester.dart';
 
-/// Guard check to prevent [asserestHttpSetup] called more than once.
+/// Guard check to prevent [asserestFtpSetup] called more than once.
 bool _asserestFtpSetup = false;
 
 /// Quick setup method for automatically binding [FtpPropertyParseProcessor]
