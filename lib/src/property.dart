@@ -2,13 +2,12 @@ import 'dart:collection';
 
 import 'package:ftpconnect/ftpconnect.dart' show SecurityType;
 import 'package:libasserest_interface/interface.dart';
-import 'package:meta/meta.dart';
 import 'package:quiver/core.dart' as quiver;
 import 'package:unique_list/unique_list.dart';
 
 /// This exception will be thrown when applying relative path
 /// as paramater which expected in absolute form.
-class NonAbsolutePathException extends AsserestException
+final class NonAbsolutePathException extends AsserestException
     implements FormatException {
   final Uri _relativeUri;
 
@@ -39,7 +38,7 @@ class NonAbsolutePathException extends AsserestException
 /// Exclusive exception for applying [AsserestFileAccess] when
 /// [AsserestFtpProperty.accessible] is `false` which causing
 /// violation in logic.
-class OperatingInDeniedFTPException extends AsserestException {
+final class OperatingInDeniedFTPException extends AsserestException {
   OperatingInDeniedFTPException._();
 
   @override
@@ -53,8 +52,7 @@ class OperatingInDeniedFTPException extends AsserestException {
 /// An entity of asserting file access for each path and determine
 /// it is accessible by listing content or download it for path to
 /// directory or files accordingly.
-@sealed
-class AsserestFileAccess {
+final class AsserestFileAccess {
   /// A segment of the path regarding on FTP's root location.
   final UnmodifiableListView<String> ftpPath;
 
@@ -141,7 +139,7 @@ class AsserestFtpProperty implements AsserestProperty {
 }
 
 /// [PropertyParseProcessor] for constructing FTP configuration.
-class FtpPropertyParseProcessor
+final class FtpPropertyParseProcessor
     extends PropertyParseProcessor<AsserestFtpProperty> {
   const FtpPropertyParseProcessor();
 

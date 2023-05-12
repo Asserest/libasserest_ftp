@@ -13,7 +13,7 @@ String get _testTempDLDir => path.join(
     "asserest_dl_tester");
 
 /// Test platform for asserting FTP protocol
-class AsserestFtpTestPlatform
+final class AsserestFtpTestPlatform
     extends AsserestTestPlatform<AsserestFtpProperty> {
   /// Construct a FTP tester with given property.
   AsserestFtpTestPlatform(super.property, {super.counter});

@@ -1,17 +1,16 @@
 name: libasserest_ftp
 description: FTP accessibility library in Asserest with security, username and password supported
-version: '1.0.0-beta.1+1'
+version: '1.0.0-beta.3'
 repository: https://github.com/Asserest/libasserest_ftp
 environment: 
-  sdk: '>2.18.999 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 dependencies:
   async_task: ^1.0.2
-  libasserest_interface: '>=1.0.0-beta.2+1 <2.0.0'
-  meta: ^1.8.0
+  libasserest_interface: '>=1.0.0-beta.3 <2.0.0'
   ftpconnect: ^2.0.5
   quiver: ^3.2.1
   unique_list: ^1.0.1
-  path: ^1.8.1
+  path: ^1.8.3
   random_string: ^2.3.1
 dev_dependencies:
-  test: ^1.23.1
+  test: ^1.24.2
