@@ -13,6 +13,10 @@ String get _testTempDLDir => path.join(
     "asserest_dl_tester");
 
 /// Test platform for asserting FTP protocol
+/// 
+/// The procedure of testing FTP will be followed in this order below:
+/// 
+/// 1. Try est
 final class AsserestFtpTestPlatform
     extends AsserestTestPlatform<AsserestFtpProperty> {
   /// Construct a FTP tester with given property.
@@ -65,7 +69,7 @@ final class AsserestFtpTestPlatform
         await ftpConn.listDirectoryContent();
       } else if (!await ftpConn.downloadFileWithRetry(absAFA, await _dlFileObj,
           pRetryCount: property.tryCount!)) {
-        // Download files but
+        // Download files but failed
         return AsserestResult.failure;
       }
     }

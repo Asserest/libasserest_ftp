@@ -125,7 +125,7 @@ class AsserestFtpProperty implements AsserestProperty {
 
   /// Optional field for [accessible] configuration that determine each path given
   /// can be operated normally.
-  final UniqueList<AsserestFileAccess>? fileAccess;
+  final List<AsserestFileAccess>? fileAccess;
 
   const AsserestFtpProperty._(
       this.url,
@@ -163,12 +163,10 @@ final class FtpPropertyParseProcessor
         additionalProperty["password"],
         security,
         access != null
-            ? UniqueList.from(
+            ? UniqueList.unmodifiable(
                 access.map(
                     (e) => AsserestFileAccess(e["target_path"], e["success"])),
-                growable: false,
-                nullable: false,
-                strict: false)
+                nullable: false)
             : null);
   }
 
